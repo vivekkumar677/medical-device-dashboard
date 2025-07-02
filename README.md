@@ -1,26 +1,5 @@
 1. Folder Structure
 # medical-device-dashboardsrc/
-├── assets/
-├── components/
-├── features/
-│   ├── devices/
-│   ├── installations/
-│   ├── serviceLogs/
-│   ├── amcCmc/
-│   ├── alerts/
-│   └── facilityCRM/
-├── redux/
-│   ├── store.js
-│   └── slices/
-├── pages/
-│   ├── Dashboard.jsx
-│   ├── Installation.jsx
-│   ├── ServiceLogs.jsx
-│   ├── AMCTracker.jsx
-│   └── Alerts.jsx
-├── utils/
-├── styles/
-└── App.jsx
 
 2. Module Development Breakdown
 (1). Device Inventory Dashboard
@@ -58,6 +37,16 @@
         Attach photos of issues
         Option to mark alerts resolved
         Redux slice: alertsSlice.js
+(6). QR Code Scanner UI for device identification
+    Display QR Code: QR Code-based device identification
+(7). Theme toggler
+    Theme toggler switcher with dark & light mode
+(8). CSV 
+    CSV exports: csv export button added to export the data
+(9). User restriction
+    Role based UI restriction implemented (Admin, Technician)
+(10). Local Storage
+    data persistence of local storage
 
 # Medical Device Admin Dashboard
 
@@ -77,7 +66,7 @@
 
 ## 📦 Setup
 ```bash
-git clone <repo-url>
+git clone https://github.com/vivekkumar677/medical-device-dashboard.git
 cd medical-device-dashboard
 npm install
 npm run dev

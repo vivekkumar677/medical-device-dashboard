@@ -1,18 +1,21 @@
 import {
   Box, Button, Checkbox, FormControlLabel, FormGroup, Grid,
-  Paper, TextField, Typography
+  Paper, TextField, Typography, IconButton
 } from "@mui/material";
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { addInstallation } from "../redux/slices/installationsSlices";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import QRScanner from "../components/QRScanner";
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const checklistItems = ['Unboxed device', 'Power test', 'Connectivity check', 'Initial setup'];
 
 const Installation = () => {
   const dispatch = useDispatch();
   const [installations, setInstallations] = useLocalStorage('installations', []);
+  const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({
     deviceId: '',
     facility: '',
@@ -25,10 +28,26 @@ const Installation = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const newEntry = { ...form, id: Date.now() };
-    dispatch(addInstallation(newEntry));
-    setInstallations([...installations, newEntry]);
-    alert('Installation logged!');
+    const isComplete = (
+      form.deviceId &&
+      form.facility &&
+      form.trainer &&
+      form.feedback &&
+      form.photo &&
+      form.checklist.length === checklistItems.length
+    );
+    const updatedEntry = { ...form, id: editId || Date.now(), status: isComplete ? 'Completed' : 'Pending' };
+
+    let updatedList;
+    if (editId) {
+      updatedList = installations.map((inst) => inst.id === editId ? updatedEntry : inst);
+    } else {
+      dispatch(addInstallation(updatedEntry));
+      updatedList = [...installations, updatedEntry];
+    }
+
+    setInstallations(updatedList);
+    alert(editId ? 'Installation updated!' : 'Installation logged!');
     setForm({
       deviceId: '',
       facility: '',
@@ -38,6 +57,7 @@ const Installation = () => {
       photo: null,
       status: 'Pending',
     });
+    setEditId(null);
   };
 
   const handleChange = (e) => {
@@ -71,9 +91,28 @@ const Installation = () => {
     }
   };
 
+  const handleEdit = (item) => {
+    setForm(item);
+    setEditId(item.id);
+  };
+
+  const handleDelete = (id) => {
+    const filtered = installations.filter(item => item.id !== id);
+    setInstallations(filtered);
+  };
+
+  const isComplete = (
+    form.deviceId &&
+    form.facility &&
+    form.trainer &&
+    form.feedback &&
+    form.photo &&
+    form.checklist.length === checklistItems.length
+  );
+
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h5" gutterBottom>Log New Installation</Typography>
+      <Typography variant="h5" gutterBottom>{editId ? 'Edit Installation' : 'Log New Installation'}</Typography>
       <Paper sx={{ p: 3 }} component="form" onSubmit={handleSubmit}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
@@ -124,15 +163,36 @@ const Installation = () => {
             </Button>
             {form.photo && (
               <Box mt={2}>
-                <img src={form.photo} alt="Uploaded" width={200} />
+                <img src={form.photo} alt="Unboxing Preview" width={200} />
               </Box>
             )}
           </Grid>
           <Grid item xs={12}>
-            <Button type="submit" variant="contained" color="primary">Submit</Button>
+            <Typography variant="subtitle2" color={isComplete ? 'green' : 'orange'}>
+              Current Status: {isComplete ? 'Completed' : 'Pending'}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Button type="submit" variant="contained" color="primary">{editId ? 'Update' : 'Submit'}</Button>
           </Grid>
         </Grid>
       </Paper>
+
+      {/* Show saved installations */}
+      <Box mt={4}>
+        <Typography variant="h6" gutterBottom>Saved Installations</Typography>
+        {installations.map(item => (
+          <Box key={item.id} sx={{ my: 2, p: 2, border: '1px solid #ccc', borderRadius: 2 }}>
+            <Typography><strong>Device:</strong> {item.deviceId}</Typography>
+            <Typography><strong>Facility:</strong> {item.facility}</Typography>
+            <Typography><strong>Status:</strong> {item.status}</Typography>
+            <Box sx={{ mt: 1 }}>
+              <IconButton onClick={() => handleEdit(item)}><EditIcon /></IconButton>
+              <IconButton onClick={() => handleDelete(item.id)}><DeleteIcon /></IconButton>
+            </Box>
+          </Box>
+        ))}
+      </Box>
     </Box>
   );
 };

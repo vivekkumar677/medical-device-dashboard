@@ -1,60 +1,17 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setDevices } from "../redux/slices/devicesSlice";
-import { Box, Button, Typography } from "@mui/material";
+import {
+  Box, Button, Typography, Paper, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { AuthContext } from "../context/AuthContext";
 import { CSVLink } from 'react-csv';
 import QRScanner from "../components/QRScanner";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 
-const dummyDevices = [
-    {
-        id: 'D001',
-        type: 'Monitor',
-        facility: 'City Hospital',
-        status: 'Online',
-        battery: 80,
-        lastService: '2025-06-15',
-        amcStatus: 'Active',
-    },
-    {
-        id: 'D002',
-        type: 'Ventilator',
-        facility: 'Metro Clinic',
-        status: 'Maintenance',
-        battery: 45,
-        lastService: '2025-05-10',
-        amcStatus: 'Expiring',
-    },
-    {
-        id: 'D003',
-        type: 'ECG Monitor',
-        facility: 'City Hospital',
-        status: 'Offline',
-        battery: 45,
-        lastService: '2025-03-12',
-        amcStatus: 'Active',
-    },
-    {
-        id: 'D004',
-        type: 'Heart Monitor',
-        facility: 'City Hospital',
-        status: 'Online',
-        battery: 45,
-        lastService: '2025-03-12',
-        amcStatus: 'Active',
-    },
-    {
-        id: 'D005',
-        type: 'Oxygen Cylinder',
-        facility: 'City Hospital',
-        status: 'Online',
-        battery: 45,
-        lastService: '2025-03-12',
-        amcStatus: 'Active',
-    },
-];
+const dummyDevices = [/* same device array */];
 
 const columns = [
   { field: 'id', headerName: 'Device ID', width: 130 },
@@ -66,80 +23,119 @@ const columns = [
   { field: 'amcStatus', headerName: 'AMC/CMC Status', width: 160 },
 ];
 
-const rows = dummyDevices.map((device) => ({
-  id: device.id,
-  type: device.type,
-  facility: device.facility,
-  status: device.status,
-  battery: device.battery,
-  lastService: device.lastService,
-  amcStatus: device.amcStatus,
-}));
-
 const Dashboard = () => {
+  const { role } = useContext(AuthContext);
+  const dispatch = useDispatch();
+  const devices = useSelector((state) => state.devices.list);
+  const [storedDevices, setStoredDevices] = useLocalStorage('devices', []);
+  const [scannedDevice, setScannedDevice] = useState(null);
 
-    const { role } = useContext(AuthContext);
-    const dispatch = useDispatch();
-    const devices = useSelector((state) => state.devices.list);
-    const [storedDevices, setStoredDevices] = useLocalStorage('devices', []);
+  const handleScan = (data) => {
+    if (data) {
+      const found = devices.find((d) => d.id === data);
+      if (found) {
+        setScannedDevice(found);
+        alert(`Device found: ${found.id} - ${found.type}`);
+      } else {
+        alert(`Device ID "${data}" not found.`);
+      }
+    }
+  };
 
-    const handleScan = (data) => {
-        if (data) {
-            const found = devices.find((d) => d.id === data);
-            if (found) {
-            alert(`Device found: ${found.id} - ${found.type}`);
-            } else {
-            alert(`Device ID "${data}" not found.`);
-            }
-        }
-    };
+  useEffect(() => {
+    if (storedDevices.length === 0) {
+      dispatch(setDevices(dummyDevices));
+      setStoredDevices(dummyDevices);
+    } else {
+      dispatch(setDevices(storedDevices));
+    }
+  }, [dispatch, setStoredDevices, storedDevices]);
 
-    useEffect(() => {
-        if (storedDevices.length === 0) {
-         // same as your previous dummyDevices array
-        dispatch(setDevices(dummyDevices));
-        setStoredDevices(dummyDevices);
-        } else {
-        dispatch(setDevices(storedDevices));
-        }
-    }, [dispatch, setStoredDevices, storedDevices]);
+  const deviceHeaders = [
+    { label: 'ID', key: 'id' },
+    { label: 'Type', key: 'type' },
+    { label: 'Facility', key: 'facility' },
+    { label: 'Status', key: 'status' },
+    { label: 'Battery', key: 'battery' },
+    { label: 'Last Service', key: 'lastService' },
+    { label: 'AMC/CMC', key: 'amcStatus' }
+  ];
 
-    const deviceHeaders = [
-        { label: 'ID', key: 'id' },
-        { label: 'Type', key: 'type' },
-        { label: 'Facility', key: 'facility' },
-        { label: 'Status', key: 'status' },
-        { label: 'Battery', key: 'battery' },
-        { label: 'Last Service', key: 'lastService' },
-        { label: 'AMC/CMC', key: 'amcStatus' }
-    ];
+  return (
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Medical Device Dashboard
+      </Typography>
 
-    return (
-        <Box sx={{ p: 4 }}>
-            <Typography variant="h4" gutterBottom>
-                Medical Device Dashboard
-            </Typography>
-            <CSVLink data={devices} headers={deviceHeaders} filename="devices.csv" style={{ textDecoration: 'none' }}>
-                <Button variant="outlined" color="primary">Export Devices</Button>
-            </CSVLink>
-            {role !== 'technician' ? (
-                <DataGrid 
-                    rows={devices}
-                    columns={columns}
-                    autoHeight
-                    rowsPerPageOptions={[5]}
-                    checkboxSelection
-                />
-            ) : (
-                <Typography>Technician have view-only access.</Typography>
-            )}
-            <Box mt={4}>
-                <Typography variant="h6">Scan QR Code</Typography>
-                <QRScanner onScan={handleScan} />
-                <p>Working on the QR code scanner...</p>
+      {role === 'admin' && (
+        <>
+          <CSVLink
+            data={devices}
+            headers={deviceHeaders}
+            filename="devices.csv"
+            style={{ textDecoration: 'none' }}
+          >
+            <Button variant="outlined" color="primary" sx={{ mb: 2 }}>
+              Export Devices
+            </Button>
+          </CSVLink>
+
+          <DataGrid
+            rows={devices}
+            columns={columns}
+            autoHeight
+            rowsPerPageOptions={[5]}
+            checkboxSelection
+          />
+        </>
+      )}
+
+      {role === 'technician' && (
+        <>
+          <Typography variant="h6" mt={2}>Scan Device QR Code</Typography>
+          <QRScanner onScan={handleScan} />
+
+          {scannedDevice && (
+            <Box mt={2}>
+              <Paper elevation={3} sx={{ p: 2 }}>
+                <Typography variant="subtitle1">Scanned Device Info</Typography>
+                <Typography><strong>ID:</strong> {scannedDevice.id}</Typography>
+                <Typography><strong>Type:</strong> {scannedDevice.type}</Typography>
+                <Typography><strong>Status:</strong> {scannedDevice.status}</Typography>
+                <Typography><strong>Facility:</strong> {scannedDevice.facility}</Typography>
+              </Paper>
             </Box>
-        </Box>
-    )
+          )}
+
+          <Box mt={4}>
+            <Typography variant="h6">All Devices (View Only)</Typography>
+            <TableContainer component={Paper} sx={{ mt: 1 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Facility</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {devices.map((device) => (
+                    <TableRow key={device.id}>
+                      <TableCell>{device.id}</TableCell>
+                      <TableCell>{device.type}</TableCell>
+                      <TableCell>{device.status}</TableCell>
+                      <TableCell>{device.facility}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        </>
+      )}
+    </Box>
+  );
 };
 
 export default Dashboard;

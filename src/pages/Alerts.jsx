@@ -15,20 +15,31 @@ const Alerts = () => {
         photo: null,
     });
 
-    const handleSubmit = () => {
-
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const newAlert = { ...form, id: Date.now() };
+        dispatch(addAlert(newAlert));
+        setForm({ deviceId: '', description: '', photo: null, });
     };
 
-    const handleChange = () => {
-
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm({ ...form, [name]: value });
     };
 
-    const handlePhotoUpload = () => {
-
+    const handlePhotoUpload = (e) => {
+        const file = e.target.files[0];
+        if(file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setForm((prev) => ({ ...prev, photo: reader.result }));
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
-    const handleDelete = () => {
-
+    const handleDelete = (id) => {
+        dispatch(deleteAlert(id));
     };
 
 
@@ -81,7 +92,7 @@ const Alerts = () => {
                                 <Typography variant="body2">Description: {alert.description}</Typography>
                             </CardContent>
                             <CardActions>
-                                <IconButton onClick={handleDelete(alert.id)}><DeleteIcon /></IconButton>
+                                <IconButton onClick={() => handleDelete(alert.id)}><DeleteIcon /></IconButton>
                             </CardActions>
                         </Card>
                     </Grid>

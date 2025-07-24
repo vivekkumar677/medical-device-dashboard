@@ -1,72 +1,87 @@
 1. Folder Structure
 # medical-device-dashboardsrc/
 
-2. Module Development Breakdown
-(1). Device Inventory Dashboard
-    Data Table with:
-        Device Type, ID, Facility
-        Status (Online/Offline/Maintenance)
-        Battery %, Last Service Date, AMC/CMC status
-        Use @mui/x-data-grid or card components
-        Redux slice: devicesSlice.js
-        Mock data via json-server or localStorage
-(2). Installation & Training Module
-    Form with:
-        Device ID (dropdown/search)
-        Upload photos (before/after)
-        Checklist (checkboxes)
-        Training feedback and completion status
-        File upload: Use base64/local URL or simulate server upload
-        Track with Redux slice: installationsSlice.js
-(3). Service Visit Logs
-    Fields:
-        Date, Engineer, Purpose (Preventive/Breakdown)
-        Visit notes
-        File upload (PDF/photo)
-        Log display with filtering by facility/date/device
-        Redux slice: serviceLogsSlice.js
-(4). AMC/CMC Tracker
-    Contract details per device:
-        Start/End dates
-        Status (Active/Expiring)
-        Display upcoming expiries
-        Support export to CSV (use json2csv or xlsx)
-        Redux slice: amcCmcSlice.js
-(5). Alerts & Photo Logs
-    Show alert logs: type, description, date
-        Attach photos of issues
-        Option to mark alerts resolved
-        Redux slice: alertsSlice.js
-(6). QR Code Scanner UI for device identification
-    Display QR Code: QR Code-based device identification
-(7). Theme toggler
-    Theme toggler switcher with dark & light mode
-(8). CSV 
-    CSV exports: csv export button added to export the data
-(9). User restriction
-    Role based UI restriction implemented (Admin, Technician)
-(10). Local Storage
-    data persistence of local storage
+A resposive React-based admin panel to manage medical device inventories, intallation logs, service visits, AMC/CMC contracts, alerts , and CRM data across medical facilities.
 
-# Medical Device Admin Dashboard
+## 🛠 Tech Stack
+- **ReactJS** + **Redux** for front-end state management
+- **Material UI** + **SCSS Modules** for styling
+- **React Router DOM** for routing
+- **QR Code Scanner** (via `react-qr-reader`)
+- **CSV Export** via `react-csv`
+- **Mock API** via `json-server` or **localStorage**
 
-## 🛠️ Tech Stack
-- ReactJS
-- Redux Toolkit
-- Material UI
-- SCSS Modules
-- Mock API: `json-server` / localStorage
+## ✅ Core Module Features
 
-## 🚀 Features
-- Inventory Dashboard
-- Installation & Training Forms
-- Service Visit Logs
-- AMC/CMC Tracker
-- Alerts & Photo Logs
+### 1. **Device Inventory Dashboard**
+- Displays device ID, type, facility, status, battery level, last service date, AMC/CMC status
+- Export device data to CSV
+- Role-based display: Admin gets editable grid, Technician gets view-only table
 
-## 📦 Setup
+### 2. **Installation & Training Module**
+- Log new installations with:
+  - Device checklist
+  - Facility & trainer info
+  - Feedback notes
+  - Unboxing photo upload
+  - QR Code scanner for auto Device ID fill
+- Tracks installation completion status
+- Edit/Delete entries from localStorage
+
+### 3. **Service Visit Logs**
+- Records Preventive and Breakdown service visits
+- Includes engineer details, purpose, notes, and photo/PDF upload
+
+### 4. **AMC/CMC Tracker**
+- Tracks maintenance contract status and expiry alerts
+- Export contract data as CSV
+
+### 5. **Alerts Module**
+- Report issues during installation/service
+- Attach photos as evidence
+
+## ✨ Highlighted Features
+- 🔍 **QR Code Scanner** to identify devices quickly
+- 👤 **Role-based Access** (Admin, Technician)
+- 💾 **localStorage Persistence** (for offline mock data)
+- 🌗 **Theme Switcher** (Light/Dark mode toggle)
+- 📤 **CSV Export** for reports
+- 📱 **Mobile-Responsive Layout**
+
+## 📦 Optional Enhancements
+- ✅ QR Code-based device identification
+- ✅ Light/Dark mode switcher
+- ✅ CSV exports
+- ✅ Role-based views
+- ✅ Mock API with json-server or localStorage
+
+## 🚀 Getting Started
+
+### 1. Clone the repository
 ```bash
 git clone https://github.com/vivekkumar677/medical-device-dashboard.git
 cd medical-device-dashboard
+```
+
+### 2. Install dependencies
+```bash
 npm install
-npm run dev
+```
+
+### 3. Run the project
+```bash
+npm start
+```
+App will start at: [http://localhost:3000](http://localhost:3000)
+
+
+## 📁 Folder Structure
+```
+src/
+├── components/        // Shared UI elements
+├── context/           // Auth & Theme context providers
+├── hooks/             // Custom hooks (e.g., useLocalStorage)
+├── pages/             // Page modules (Dashboard, Installation, etc.)
+├── redux/             // Redux slices and store setup
+└── App.js             // Main App component
+```

@@ -31,15 +31,9 @@ const Dashboard = () => {
   const [scannedDevice, setScannedDevice] = useState(null);
 
   const handleScan = (data) => {
-    if (data) {
-      const found = devices.find((d) => d.id === data);
-      if (found) {
-        setScannedDevice(found);
-        alert(`Device found: ${found.id} - ${found.type}`);
-      } else {
-        alert(`Device ID "${data}" not found.`);
-      }
-    }
+    setScannedDevice(data);
+    alert(`Device found: ${data}`);
+
   };
 
   useEffect(() => {

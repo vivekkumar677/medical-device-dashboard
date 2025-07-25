@@ -11,7 +11,54 @@ import { CSVLink } from 'react-csv';
 import QRScanner from "../components/QRScanner";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 
-const dummyDevices = [/* same device array */];
+// const dummyDevices = [/* same device array */];
+const dummyDevices = [
+  {
+    id: "DEV-001",
+    type: "ECG Monitor",
+    facility: "City Hospital",
+    status: "Not Active",
+    battery: 90,
+    lastService: "2024-06-14T18:30:00.000Z",
+    amcStatus: "Good",
+  },
+  {
+    id: "DEV-002",
+    type: "X-Ray Unit",
+    facility: "Delhi AIIMS",
+    status: "Active",
+    battery: 90,
+    lastService: "2024-06-14T18:30:00.000Z",
+    amcStatus: "Good",
+  },
+  {
+    id: "DEV-003",
+    type: "Blood Pressure Monitor",
+    facility: "Apollo Hospital",
+    status: "Active",
+    battery: 95,
+    lastService: "2024-06-14T18:30:00.000Z",
+    amcStatus: "Good",
+  },
+  {
+    id: "DEV-004",
+    type: "Respiratory Monitor",
+    facility: "Ram Manor Lohia",
+    status: "Active",
+    battery: 98,
+    lastService: "2024-06-14T18:30:00.000Z",
+    amcStatus: "Good",
+  },
+  {
+    id: "DEV-005",
+    type: "Thermometer",
+    facility: "Ganesh Hospital",
+    status: "Active",
+    battery: 80,
+    lastService: "2024-06-14T18:30:00.000Z",
+    amcStatus: "Good",
+  },
+];
 
 const columns = [
   { field: 'id', headerName: 'Device ID', width: 130 },
@@ -31,9 +78,14 @@ const Dashboard = () => {
   const [scannedDevice, setScannedDevice] = useState(null);
 
   const handleScan = (data) => {
-    setScannedDevice(data);
-    alert(`Device found: ${data}`);
-
+    console.log("Raw QR Code content:", data);
+    try {
+      const parsed = JSON.parse(data);
+      setScannedDevice(parsed);
+      console.log("Parsed QR data:", parsed);
+    } catch (err) {
+      console.error("Invalid QR code data. Must be JSON.", err);
+    }
   };
 
   useEffect(() => {

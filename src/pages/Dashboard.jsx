@@ -126,7 +126,8 @@ const Dashboard = () => {
     }
   };
 
-  const handleUpdateDevice = async () => {
+  const handleUpdateDevice = async (e) => {
+    e.preventDefault();
     try {
       const res = await axios.put(
         `${BASE_URL}/devices/${editingDevice.device_id}`,

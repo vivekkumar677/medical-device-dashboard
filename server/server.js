@@ -6,17 +6,17 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-const corsOptions = {
-  origin: [
-    'http://localhost:3000', 
-    'https://medical-device-dashboard.vercel.app/'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-};
-app.use(cors(corsOptions));
+// const corsOptions = {
+//   origin: 'https://medical-device-dashboard.vercel.app',
+//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//   credentials: true,
+// };
+// app.use(cors(corsOptions));
+// app.use(express.json());
+// console.log("DATABASE_URL:", process.env.DATABASE_URL);
+
+app.use(cors());
 app.use(express.json());
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
 
 // ====================== ROUTES ======================

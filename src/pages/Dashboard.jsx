@@ -104,13 +104,16 @@ const Dashboard = () => {
       )}
 
       {editingDevice && (
-        <Dialog open onClose={() => setEditingDevice(null)}>
+        <Dialog  open onClose={() => setEditingDevice(null)}>
           <DialogTitle>Edit Device</DialogTitle>
           <DialogContent>
-            <TextField label="Type" value={editingDevice.type} onChange={(e) => setEditingDevice({ ...editingDevice, type: e.target.value })} fullWidth />
-            <TextField label="Facility" value={editingDevice.facility} onChange={(e) => setEditingDevice({ ...editingDevice, facility: e.target.value })} fullWidth />
-            <TextField label="Battery" type="number" value={editingDevice.battery} onChange={(e) => setEditingDevice({ ...editingDevice, battery: e.target.value })} fullWidth />
-            <TextField label="Status" value={editingDevice.status} onChange={(e) => setEditingDevice({ ...editingDevice, status: e.target.value })} fullWidth />
+            <Box mt={4} mb={4} display="flex" flexDirection="column" gap={2}>
+              <TextField fullWidth label="Type" value={editingDevice.type} onChange={(e) => setEditingDevice({ ...editingDevice, type: e.target.value })} fullWidth />
+              <TextField label="Facility" value={editingDevice.facility} onChange={(e) => setEditingDevice({ ...editingDevice, facility: e.target.value })} fullWidth />
+              <TextField label="Battery" type="number" value={editingDevice.battery} onChange={(e) => setEditingDevice({ ...editingDevice, battery: e.target.value })} fullWidth />
+              <TextField label="Status" value={editingDevice.status} onChange={(e) => setEditingDevice({ ...editingDevice, status: e.target.value })} fullWidth />
+              <TextField label="AMC/CMC Status" value={editingDevice.amcStatus} onChange={(e) => setEditingDevice({ ...editingDevice, amcStatus: e.target.value })} fullWidth />
+            </Box>  
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setEditingDevice(null)}>Cancel</Button>

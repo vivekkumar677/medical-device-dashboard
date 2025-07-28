@@ -14,11 +14,11 @@ const amcCmcSlice = createSlice({
         deleteContracts: (state, action) => {
             state.list = state.list.filter(contract => contract.id !== action.payload);
         },
-        setContracts: (state, action) => {
+        updateContract: (state, action) => {
             state.list = action.payload;
         },
     },
 });
 
-export const { addContract, deleteContracts, setContract } = amcCmcSlice.actions;
+export const { addContract, deleteContracts, updateContract } = amcCmcSlice.actions;
 export default amcCmcSlice.reducer;

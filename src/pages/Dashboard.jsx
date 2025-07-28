@@ -3,72 +3,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { setDevices } from "../redux/slices/devicesSlice";
 import {
   Box, Button, Typography, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow
+  TableContainer, TableHead, TableRow, Dialog, DialogTitle,
+  DialogContent, DialogActions, TextField
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { AuthContext } from "../context/AuthContext";
 import { CSVLink } from 'react-csv';
 import QRScanner from "../components/QRScanner";
-import { useLocalStorage } from "../hooks/useLocalStorage";
-
-// const dummyDevices = [/* same device array */];
-const dummyDevices = [
-  {
-    id: "DEV-001",
-    type: "ECG Monitor",
-    facility: "City Hospital",
-    status: "Not Active",
-    battery: 90,
-    lastService: "2024-06-14T18:30:00.000Z",
-    amcStatus: "Good",
-  },
-  {
-    id: "DEV-002",
-    type: "X-Ray Unit",
-    facility: "Delhi AIIMS",
-    status: "Active",
-    battery: 90,
-    lastService: "2024-06-14T18:30:00.000Z",
-    amcStatus: "Good",
-  },
-  {
-    id: "DEV-003",
-    type: "Blood Pressure Monitor",
-    facility: "Apollo Hospital",
-    status: "Active",
-    battery: 95,
-    lastService: "2024-06-14T18:30:00.000Z",
-    amcStatus: "Good",
-  },
-  {
-    id: "DEV-004",
-    type: "Respiratory Monitor",
-    facility: "Ram Manor Lohia",
-    status: "Active",
-    battery: 98,
-    lastService: "2024-06-14T18:30:00.000Z",
-    amcStatus: "Good",
-  },
-  {
-    id: "DEV-005",
-    type: "Thermometer",
-    facility: "Ganesh Hospital",
-    status: "Active",
-    battery: 80,
-    lastService: "2024-06-14T18:30:00.000Z",
-    amcStatus: "Good",
-  },
-];
-
-const columns = [
-  { field: 'id', headerName: 'Device ID', width: 130 },
-  { field: 'type', headerName: 'Type', width: 150 },
-  { field: 'facility', headerName: 'Facility', width: 180 },
-  { field: 'status', headerName: 'Status', width: 150 },
-  { field: 'battery', headerName: 'Battery (%)', type: 'number', width: 130 },
-  { field: 'lastService', headerName: 'Last Service', width: 150 },
-  { field: 'amcStatus', headerName: 'AMC/CMC Status', width: 160 },
-];
+import { useLocalStorage } from "../utils/useLocalStorage";
 
 const Dashboard = () => {
   const { role } = useContext(AuthContext);
@@ -76,6 +18,7 @@ const Dashboard = () => {
   const devices = useSelector((state) => state.devices.list);
   const [storedDevices, setStoredDevices] = useLocalStorage('devices', []);
   const [scannedDevice, setScannedDevice] = useState(null);
+  const [editingDevice, setEditingDevice] = useState(null);
 
   const handleScan = (data) => {
     console.log("Raw QR Code content:", data);
@@ -89,13 +32,18 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (storedDevices.length === 0) {
-      dispatch(setDevices(dummyDevices));
-      setStoredDevices(dummyDevices);
-    } else {
-      dispatch(setDevices(storedDevices));
-    }
-  }, [dispatch, setStoredDevices, storedDevices]);
+    const fetchDevices = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/devices/all');
+        const data = await response.json();
+        setStoredDevices(data);
+        dispatch(setDevices(data));
+      } catch (error) {
+        console.error('Error fetching devices from backend:', error);
+      }
+    };
+    fetchDevices();
+  }, [dispatch]);
 
   const deviceHeaders = [
     { label: 'ID', key: 'id' },
@@ -105,6 +53,25 @@ const Dashboard = () => {
     { label: 'Battery', key: 'battery' },
     { label: 'Last Service', key: 'lastService' },
     { label: 'AMC/CMC', key: 'amcStatus' }
+  ];
+
+  const columns = [
+    { field: 'id', headerName: 'Device ID', width: 130 },
+    { field: 'type', headerName: 'Type', width: 150 },
+    { field: 'facility', headerName: 'Facility', width: 180 },
+    { field: 'status', headerName: 'Status', width: 150 },
+    { field: 'battery', headerName: 'Battery (%)', type: 'number', width: 130 },
+    { field: 'lastService', headerName: 'Last Service', width: 150 },
+    { field: 'amcStatus', headerName: 'AMC/CMC Status', width: 160 },
+    {
+      field: "actions",
+      headerName: "Actions",
+      renderCell: (params) => (
+        <Button variant="outlined" onClick={() => setEditingDevice(params.row)}>
+          Edit
+        </Button>
+      ),
+    },
   ];
 
   return (
@@ -136,6 +103,40 @@ const Dashboard = () => {
         </>
       )}
 
+      {editingDevice && (
+        <Dialog open onClose={() => setEditingDevice(null)}>
+          <DialogTitle>Edit Device</DialogTitle>
+          <DialogContent>
+            <TextField label="Type" value={editingDevice.type} onChange={(e) => setEditingDevice({ ...editingDevice, type: e.target.value })} fullWidth />
+            <TextField label="Facility" value={editingDevice.facility} onChange={(e) => setEditingDevice({ ...editingDevice, facility: e.target.value })} fullWidth />
+            <TextField label="Battery" type="number" value={editingDevice.battery} onChange={(e) => setEditingDevice({ ...editingDevice, battery: e.target.value })} fullWidth />
+            <TextField label="Status" value={editingDevice.status} onChange={(e) => setEditingDevice({ ...editingDevice, status: e.target.value })} fullWidth />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditingDevice(null)}>Cancel</Button>
+            <Button
+              onClick={async () => {
+                try {
+                  const response = await fetch(`http://localhost:5000/devices/${editingDevice.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(editingDevice),
+                  });
+                  const updated = await response.json();
+                  const updatedList = devices.map((d) => (d.id === updated.id ? updated : d));
+                  dispatch(setDevices(updatedList));
+                  setEditingDevice(null);
+                } catch (err) {
+                  console.error("Failed to update:", err);
+                }
+              }}
+            >
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
       {role === 'technician' && (
         <>
           <Typography variant="h6" mt={2}>Scan Device QR Code</Typography>
@@ -145,7 +146,7 @@ const Dashboard = () => {
             <Box mt={2}>
               <Paper elevation={3} sx={{ p: 2 }}>
                 <Typography variant="subtitle1">Scanned Device Info</Typography>
-                <Typography><strong>ID:</strong> {scannedDevice.id}</Typography>
+                <Typography><strong>ID:</strong> {scannedDevice.id || scannedDevice.device_id}</Typography>
                 <Typography><strong>Type:</strong> {scannedDevice.type}</Typography>
                 <Typography><strong>Status:</strong> {scannedDevice.status}</Typography>
                 <Typography><strong>Facility:</strong> {scannedDevice.facility}</Typography>

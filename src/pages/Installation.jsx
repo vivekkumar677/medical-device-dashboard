@@ -2,13 +2,15 @@ import {
   Box, Button, Checkbox, FormControlLabel, FormGroup, Grid,
   Paper, TextField, Typography, IconButton
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { addInstallation } from "../redux/slices/installationsSlices";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useLocalStorage } from "../utils/useLocalStorage";
 import QRScanner from "../components/QRScanner";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+
+// ... [imports remain unchanged]
 
 const checklistItems = ['Unboxed device', 'Power test', 'Connectivity check', 'Initial setup'];
 
@@ -23,20 +25,32 @@ const Installation = () => {
     checklist: [],
     feedback: '',
     photo: null,
+    photoName: '',
     status: 'Pending',
   });
 
+  const isComplete = (
+    form.deviceId &&
+    form.facility &&
+    form.trainer &&
+    form.feedback.trim() !== '' &&
+    form.photo &&
+    form.checklist.length === checklistItems.length
+  );
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const isComplete = (
-      form.deviceId &&
-      form.facility &&
-      form.trainer &&
-      form.feedback &&
-      form.photo &&
-      form.checklist.length === checklistItems.length
-    );
-    const updatedEntry = { ...form, id: editId || Date.now(), status: isComplete ? 'Completed' : 'Pending' };
+
+    if (!form.feedback || !form.photo) {
+      alert("Please upload photo and provide feedback before submitting.");
+      return;
+    }
+
+    const updatedEntry = {
+      ...form,
+      id: editId || Date.now(),
+      status: isComplete ? 'Completed' : 'Pending',
+    };
 
     let updatedList;
     if (editId) {
@@ -48,6 +62,7 @@ const Installation = () => {
 
     setInstallations(updatedList);
     alert(editId ? 'Installation updated!' : 'Installation logged!');
+
     setForm({
       deviceId: '',
       facility: '',
@@ -55,6 +70,7 @@ const Installation = () => {
       checklist: [],
       feedback: '',
       photo: null,
+      photoName: '',
       status: 'Pending',
     });
     setEditId(null);
@@ -79,7 +95,11 @@ const Installation = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setForm((prev) => ({ ...prev, photo: reader.result }));
+        setForm((prev) => ({
+          ...prev,
+          photo: reader.result,
+          photoName: file.name,
+        }));
       };
       reader.readAsDataURL(file);
     }
@@ -97,22 +117,16 @@ const Installation = () => {
   };
 
   const handleDelete = (id) => {
-    const filtered = installations.filter(item => item.id !== id);
+    const filtered = installations.filter((item) => item.id !== id);
     setInstallations(filtered);
   };
 
-  const isComplete = (
-    form.deviceId &&
-    form.facility &&
-    form.trainer &&
-    form.feedback &&
-    form.photo &&
-    form.checklist.length === checklistItems.length
-  );
-
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h5" gutterBottom>{editId ? 'Edit Installation' : 'Log New Installation'}</Typography>
+      <Typography variant="h5" gutterBottom>
+        {editId ? 'Edit Installation' : 'Log New Installation'}
+      </Typography>
+
       <Paper sx={{ p: 3 }} component="form" onSubmit={handleSubmit}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
@@ -128,6 +142,7 @@ const Installation = () => {
           <Grid item xs={12}>
             <TextField fullWidth label="Trainer" name="trainer" value={form.trainer} onChange={handleChange} required />
           </Grid>
+
           <Grid item xs={12}>
             <Typography variant="subtitle1">Checklist</Typography>
             <FormGroup row>
@@ -145,6 +160,7 @@ const Installation = () => {
               ))}
             </FormGroup>
           </Grid>
+
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -154,31 +170,39 @@ const Installation = () => {
               name="feedback"
               value={form.feedback}
               onChange={handleChange}
+              required
             />
           </Grid>
+
           <Grid item xs={12}>
             <Button variant="contained" component="label">
-              Upload Unboxing Photo
-              <input type="file" hidden accept="image/*" onChange={handlePhotoUpload} />
+              Upload Photo / PDF
+              <input type="file" hidden accept="image/*,.pdf" onChange={handlePhotoUpload} />
             </Button>
             {form.photo && (
               <Box mt={2}>
-                <img src={form.photo} alt="Unboxing Preview" width={200} />
+                <Typography variant="body2">{form.photoName}</Typography>
+                {form.photo.startsWith('data:image') && (
+                  <img src={form.photo} alt="Preview" width={200} />
+                )}
               </Box>
             )}
           </Grid>
+
           <Grid item xs={12}>
             <Typography variant="subtitle2" color={isComplete ? 'green' : 'orange'}>
               Current Status: {isComplete ? 'Completed' : 'Pending'}
             </Typography>
           </Grid>
+
           <Grid item xs={12}>
-            <Button type="submit" variant="contained" color="primary">{editId ? 'Update' : 'Submit'}</Button>
+            <Button type="submit" variant="contained" color="primary" disabled={!isComplete}>
+              {editId ? 'Update' : 'Submit'}
+            </Button>
           </Grid>
         </Grid>
       </Paper>
 
-      {/* Show saved installations */}
       <Box mt={4}>
         <Typography variant="h6" gutterBottom>Saved Installations</Typography>
         {installations.map(item => (

@@ -17,8 +17,14 @@ const serviceLogsSlice = createSlice({
         setLog: (state, action) => {
             state.list = action.payload;
         },
+        updateLog: (state, action) => {
+            const index = state.list.findIndex(log => log.id === action.payload.id);
+            if(index !== -1) {
+                state.list[index] = action.payload;
+            }
+        }
     },
 });
 
-export const { addLog, deleteLog, setLog } = serviceLogsSlice.actions;
+export const { addLog, deleteLog, setLog, updateLog } = serviceLogsSlice.actions;
 export default serviceLogsSlice.reducer;

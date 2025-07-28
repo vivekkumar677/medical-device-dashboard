@@ -15,11 +15,20 @@ const Alerts = () => {
         photo: null,
     });
 
+    const [error, setError] = useState('');
+
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (!form.photo) {
+            setError("Photo upload is required to submit the alert.");
+            return;
+        }
+
         const newAlert = { ...form, id: Date.now() };
         dispatch(addAlert(newAlert));
-        setForm({ deviceId: '', description: '', photo: null, });
+        setForm({ deviceId: '', description: '', photo: null });
+        setError('');
     };
 
     const handleChange = (e) => {
@@ -33,6 +42,7 @@ const Alerts = () => {
             const reader = new FileReader();
             reader.onloadend = () => {
                 setForm((prev) => ({ ...prev, photo: reader.result }));
+                setError('');
             };
             reader.readAsDataURL(file);
         }
@@ -41,7 +51,6 @@ const Alerts = () => {
     const handleDelete = (id) => {
         dispatch(deleteAlert(id));
     };
-
 
     return (
         <Box sx={{p:4}}>
@@ -72,6 +81,9 @@ const Alerts = () => {
                             <Box mt={2}>
                                 <img src={form.photo} alt="Preview" width={200} />
                             </Box>
+                        )}
+                        {error && (
+                            <Typography variant="body2" color="error" mt={1}>{error}</Typography>
                         )}
                     </Grid>
                     <Grid item xs={12}>

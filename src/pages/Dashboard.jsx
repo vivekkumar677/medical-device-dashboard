@@ -24,7 +24,7 @@ import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 
 
-// const BASE_URL = "https://medical-device-dashboard-9ee9.onrender.com";
+const BASE_URL = "https://medical-device-dashboard-xn99.onrender.com/";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -56,7 +56,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/devices/all`);
+        const res = await axios.get(`${BASE_URL}/devices/all`);
         const data = res.data;
 
         const validDevices = data
@@ -99,7 +99,7 @@ const Dashboard = () => {
     };
 
     try {
-      const res = await axios.post(`http://localhost:5000/devices`, payload);
+      const res = await axios.post(`${BASE_URL}/devices`, payload);
 
       if (res.status === 201 && res.data.device) {
         const addedDevice = {
@@ -129,7 +129,7 @@ const Dashboard = () => {
   const handleUpdateDevice = async () => {
     try {
       const res = await axios.put(
-        `http://localhost:5000/devices/${editingDevice.device_id}`,
+        `${BASE_URL}/devices/${editingDevice.device_id}`,
         {
           ...editingDevice,
         }
@@ -149,7 +149,7 @@ const Dashboard = () => {
 
   const handleDelete = async (id) => {
     try {
-      const res = await axios.delete(`http://localhost:5000/devices/${id}`);
+      const res = await axios.delete(`${BASE_URL}/devices/${id}`);
       if (res.status === 200) {
         dispatch(deleteDevice(id));
       } else {

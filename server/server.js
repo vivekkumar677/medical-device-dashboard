@@ -4,7 +4,7 @@ const cors = require('cors');
 const pool = require('./db');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 
 // Middleware
 app.use(cors());
@@ -26,6 +26,15 @@ app.post('/devices', async (req, res) => {
     amc_status: amc_status_snake,
   } = req.body;
 
+  if (!id) {
+      return res.status(400).json({ error: "Device ID is required" });
+    }
+
+  // Validate battery is a number if present
+  if (battery && isNaN(parseInt(battery))) {
+    return res.status(400).json({ error: "Battery must be a number" });
+  }
+  
   // Testing purpose
   console.log('Received payload:', req.body);
   const lastService = last_service_camel || last_service_snake || null;
@@ -33,6 +42,7 @@ app.post('/devices', async (req, res) => {
   console.log('Received payload:', req.body);
   console.log('Parsed lastService:', lastService);
   console.log('Parsed amcStatus:', amcStatus);
+  console.log('Parsed id:', id);
 
   try {
     // Check for existing device

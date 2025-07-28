@@ -16,6 +16,8 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
+
 
 // ====================== ROUTES ======================
 

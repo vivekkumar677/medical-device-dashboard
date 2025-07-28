@@ -1,190 +1,336 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { setDevices } from "../redux/slices/devicesSlice";
-import {
-  Box, Button, Typography, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField
-} from "@mui/material";
+import React, { useEffect, useState, useContext } from "react";
 import { DataGrid } from "@mui/x-data-grid";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addDevice,
+  setDevices,
+  updateDevice,
+  deleteDevice,
+} from "../redux/slices/devicesSlice";
+import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
-import { CSVLink } from 'react-csv';
-import QRScanner from "../components/QRScanner";
-import { useLocalStorage } from "../utils/useLocalStorage";
+
+
+// const BASE_URL = "https://medical-device-dashboard-9ee9.onrender.com";
 
 const Dashboard = () => {
-  const { role } = useContext(AuthContext);
   const dispatch = useDispatch();
   const devices = useSelector((state) => state.devices.list);
-  const [storedDevices, setStoredDevices] = useLocalStorage('devices', []);
-  const [scannedDevice, setScannedDevice] = useState(null);
-  const [editingDevice, setEditingDevice] = useState(null);
 
-  const handleScan = (data) => {
-    console.log("Raw QR Code content:", data);
-    try {
-      const parsed = JSON.parse(data);
-      setScannedDevice(parsed);
-      console.log("Parsed QR data:", parsed);
-    } catch (err) {
-      console.error("Invalid QR code data. Must be JSON.", err);
-    }
-  };
+  // Use role and loginAs from context
+  const { role, loginAs } = useContext(AuthContext);
+
+  const [open, setOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [newDevice, setNewDevice] = useState({
+    device_id: "",
+    type: "",
+    facility: "",
+    battery: "",
+    status: "",
+    amcStatus: "",
+  });
+
+  const [editingDevice, setEditingDevice] = useState({
+    device_id: "",
+    type: "",
+    facility: "",
+    battery: "",
+    status: "",
+    amcStatus: "",
+  });
 
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await fetch('http://localhost:5000/devices/all');
-        const data = await response.json();
-        setStoredDevices(data);
-        dispatch(setDevices(data));
+        const res = await axios.get(`http://localhost:5000/devices/all`);
+        const data = res.data;
+
+        const validDevices = data
+          .map((d) => ({
+            ...d,
+            device_id: d.device_id || d.id,
+          }))
+          .filter((d) => d.device_id);
+
+        dispatch(setDevices(validDevices));
       } catch (error) {
-        console.error('Error fetching devices from backend:', error);
+        console.error("Failed to fetch devices:", error);
       }
     };
+
     fetchDevices();
   }, [dispatch]);
 
-  const deviceHeaders = [
-    { label: 'ID', key: 'id' },
-    { label: 'Type', key: 'type' },
-    { label: 'Facility', key: 'facility' },
-    { label: 'Status', key: 'status' },
-    { label: 'Battery', key: 'battery' },
-    { label: 'Last Service', key: 'lastService' },
-    { label: 'AMC/CMC', key: 'amcStatus' }
+  const handleAddDevice = async () => {
+    if (!newDevice.device_id) {
+      alert("Device ID is required.");
+      return;
+    }
+
+    const isDuplicate = devices.some((d) => d.device_id === newDevice.device_id);
+    if (isDuplicate) {
+      alert("Device ID must be unique.");
+      return;
+    }
+
+    const payload = {
+      device_id: newDevice.device_id.trim(),
+      type: newDevice.type,
+      facility: newDevice.facility,
+      status: newDevice.status,
+      battery: parseInt(newDevice.battery),
+      lastService: null,
+      amcStatus: newDevice.amcStatus || null,
+    };
+
+    try {
+      const res = await axios.post(`http://localhost:5000/devices`, payload);
+
+      if (res.status === 201 && res.data.device) {
+        const addedDevice = {
+          ...res.data.device,
+          device_id: res.data.device.device_id,
+        };
+
+        dispatch(addDevice(addedDevice));
+        setOpen(false);
+        setNewDevice({
+          device_id: "",
+          type: "",
+          facility: "",
+          battery: "",
+          status: "",
+          amcStatus: "",
+        });
+      } else {
+        alert("Failed to add device");
+      }
+    } catch (err) {
+      console.error("Add device error:", err);
+      alert("Error adding device");
+    }
+  };
+
+  const handleUpdateDevice = async () => {
+    try {
+      const res = await axios.put(
+        `http://localhost:5000/devices/${editingDevice.device_id}`,
+        {
+          ...editingDevice,
+        }
+      );
+
+      if (res.status === 200) {
+        dispatch(updateDevice(editingDevice));
+        setEditDialogOpen(false);
+      } else {
+        alert("Failed to update device");
+      }
+    } catch (err) {
+      console.error("Update error:", err);
+      alert("Error updating device");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const res = await axios.delete(`http://localhost:5000/devices/${id}`);
+      if (res.status === 200) {
+        dispatch(deleteDevice(id));
+      } else {
+        alert("Delete failed");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Error deleting device");
+    }
+  };
+
+  const baseColumns = [
+    { field: "device_id", headerName: "Device ID", width: 120 },
+    { field: "type", headerName: "Type", width: 150 },
+    { field: "facility", headerName: "Facility", width: 150 },
+    { field: "battery", headerName: "Battery", width: 100 },
+    { field: "status", headerName: "Status", width: 120 },
+    { field: "amcStatus", headerName: "AMC/CMC Status", width: 150 },
   ];
 
-  const columns = [
-    { field: 'id', headerName: 'Device ID', width: 130 },
-    { field: 'type', headerName: 'Type', width: 150 },
-    { field: 'facility', headerName: 'Facility', width: 180 },
-    { field: 'status', headerName: 'Status', width: 150 },
-    { field: 'battery', headerName: 'Battery (%)', type: 'number', width: 130 },
-    { field: 'lastService', headerName: 'Last Service', width: 150 },
-    { field: 'amcStatus', headerName: 'AMC/CMC Status', width: 160 },
-    {
-      field: "actions",
-      headerName: "Actions",
-      renderCell: (params) => (
-        <Button variant="outlined" onClick={() => setEditingDevice(params.row)}>
+  const adminActionsColumn = {
+    field: "actions",
+    headerName: "Actions",
+    width: 200,
+    sortable: false,
+    filterable: false,
+    renderCell: (params) => (
+      <>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => {
+            setEditingDevice(params.row);
+            setEditDialogOpen(true);
+          }}
+          sx={{ mr: 1 }}
+        >
           Edit
         </Button>
-      ),
-    },
-  ];
+        <Button
+          variant="outlined"
+          color="error"
+          size="small"
+          onClick={() => handleDelete(params.row.device_id)}
+        >
+          Delete
+        </Button>
+      </>
+    ),
+  };
+
+  const columns = role === "admin" ? [...baseColumns, adminActionsColumn] : baseColumns;
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Medical Device Dashboard
-      </Typography>
+    <div style={{ padding: 20 }}>
+      <h2>Medical Device Dashboard</h2>
+      <div style={{ height: 500, width: "100%" }}>
+        <DataGrid
+          rows={devices.filter((d) => d.device_id)}
+          columns={columns}
+          getRowId={(row) => row.device_id}
+          autoHeight
+          rowsPerPageOptions={[5]}
+          checkboxSelection={role === "admin"}
+        />
+      </div>
 
-      {role === 'admin' && (
-        <>
-          <CSVLink
-            data={devices}
-            headers={deviceHeaders}
-            filename="devices.csv"
-            style={{ textDecoration: 'none' }}
-          >
-            <Button variant="outlined" color="primary" sx={{ mb: 2 }}>
-              Export Devices
-            </Button>
-          </CSVLink>
-
-          <DataGrid
-            rows={devices}
-            columns={columns}
-            autoHeight
-            rowsPerPageOptions={[5]}
-            checkboxSelection
-          />
-        </>
-      )}
-
-      {editingDevice && (
-        <Dialog  open onClose={() => setEditingDevice(null)}>
-          <DialogTitle>Edit Device</DialogTitle>
+      {/* Add Device Dialog */}
+      <Dialog open={open} onClose={() => setOpen(false)}>
+        <DialogTitle>Add Device</DialogTitle>
+        <Box onSubmit={handleAddDevice}>
           <DialogContent>
-            <Box mt={4} mb={4} display="flex" flexDirection="column" gap={2}>
-              <TextField fullWidth label="Type" value={editingDevice.type} onChange={(e) => setEditingDevice({ ...editingDevice, type: e.target.value })} fullWidth />
-              <TextField label="Facility" value={editingDevice.facility} onChange={(e) => setEditingDevice({ ...editingDevice, facility: e.target.value })} fullWidth />
-              <TextField label="Battery" type="number" value={editingDevice.battery} onChange={(e) => setEditingDevice({ ...editingDevice, battery: e.target.value })} fullWidth />
-              <TextField label="Status" value={editingDevice.status} onChange={(e) => setEditingDevice({ ...editingDevice, status: e.target.value })} fullWidth />
-              <TextField label="AMC/CMC Status" value={editingDevice.amcStatus} onChange={(e) => setEditingDevice({ ...editingDevice, amcStatus: e.target.value })} fullWidth />
-            </Box>  
+            <TextField
+              label="Device ID"
+              value={newDevice.device_id}
+              onChange={(e) =>
+                setNewDevice({ ...newDevice, device_id: e.target.value })
+              }
+              fullWidth
+              required
+            />
+            <TextField
+              label="Type"
+              value={newDevice.type}
+              onChange={(e) => setNewDevice({ ...newDevice, type: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Facility"
+              value={newDevice.facility}
+              onChange={(e) =>
+                setNewDevice({ ...newDevice, facility: e.target.value })
+              }
+              fullWidth
+            />
+            <TextField
+              label="Battery"
+              type="number"
+              value={newDevice.battery}
+              onChange={(e) =>
+                setNewDevice({ ...newDevice, battery: e.target.value })
+              }
+              fullWidth
+            />
+            <TextField
+              label="Status"
+              value={newDevice.status}
+              onChange={(e) => setNewDevice({ ...newDevice, status: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="AMC/CMC Status"
+              value={newDevice.amcStatus}
+              onChange={(e) =>
+                setNewDevice({ ...newDevice, amcStatus: e.target.value })
+              }
+              fullWidth
+            />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setEditingDevice(null)}>Cancel</Button>
-            <Button
-              onClick={async () => {
-                try {
-                  const response = await fetch(`http://localhost:5000/devices/${editingDevice.id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(editingDevice),
-                  });
-                  const updated = await response.json();
-                  const updatedList = devices.map((d) => (d.id === updated.id ? updated : d));
-                  dispatch(setDevices(updatedList));
-                  setEditingDevice(null);
-                } catch (err) {
-                  console.error("Failed to update:", err);
-                }
-              }}
-            >
-              Save
-            </Button>
-          </DialogActions>
-        </Dialog>
-      )}
+        </Box>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={handleAddDevice} variant="contained">
+            Add
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {role === 'technician' && (
-        <>
-          <Typography variant="h6" mt={2}>Scan Device QR Code</Typography>
-          <QRScanner onScan={handleScan} />
-
-          {scannedDevice && (
-            <Box mt={2}>
-              <Paper elevation={3} sx={{ p: 2 }}>
-                <Typography variant="subtitle1">Scanned Device Info</Typography>
-                <Typography><strong>ID:</strong> {scannedDevice.id || scannedDevice.device_id}</Typography>
-                <Typography><strong>Type:</strong> {scannedDevice.type}</Typography>
-                <Typography><strong>Status:</strong> {scannedDevice.status}</Typography>
-                <Typography><strong>Facility:</strong> {scannedDevice.facility}</Typography>
-              </Paper>
-            </Box>
-          )}
-
-          <Box mt={4}>
-            <Typography variant="h6">All Devices (View Only)</Typography>
-            <TableContainer component={Paper} sx={{ mt: 1 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Facility</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {devices.map((device) => (
-                    <TableRow key={device.id}>
-                      <TableCell>{device.id}</TableCell>
-                      <TableCell>{device.type}</TableCell>
-                      <TableCell>{device.status}</TableCell>
-                      <TableCell>{device.facility}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
-        </>
-      )}
-    </Box>
+      {/* Edit Device Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
+        <DialogTitle>Edit Device</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Type"
+            value={editingDevice.type}
+            onChange={(e) =>
+              setEditingDevice({ ...editingDevice, type: e.target.value })
+            }
+            fullWidth
+          />
+          <TextField
+            label="Facility"
+            value={editingDevice.facility}
+            onChange={(e) =>
+              setEditingDevice({ ...editingDevice, facility: e.target.value })
+            }
+            fullWidth
+          />
+          <TextField
+            label="Battery"
+            type="number"
+            value={editingDevice.battery}
+            onChange={(e) =>
+              setEditingDevice({ ...editingDevice, battery: e.target.value })
+            }
+            fullWidth
+          />
+          <TextField
+            label="Status"
+            value={editingDevice.status}
+            onChange={(e) =>
+              setEditingDevice({ ...editingDevice, status: e.target.value })
+            }
+            fullWidth
+          />
+          <TextField
+            label="AMC/CMC Status"
+            value={editingDevice.amcStatus}
+            onChange={(e) =>
+              setEditingDevice({ ...editingDevice, amcStatus: e.target.value })
+            }
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleUpdateDevice} variant="contained">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
   );
 };
 

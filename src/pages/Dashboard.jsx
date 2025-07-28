@@ -24,7 +24,7 @@ import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 
 
-const BASE_URL = "https://medical-device-dashboard-xn99.onrender.com/";
+const BASE_URL = "https://medical-device-dashboard-p2tc.onrender.com";
 
 const Dashboard = () => {
   const dispatch = useDispatch();

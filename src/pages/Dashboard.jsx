@@ -75,7 +75,8 @@ const Dashboard = () => {
     fetchDevices();
   }, [dispatch]);
 
-  const handleAddDevice = async () => {
+  const handleAddDevice = async (e) => {
+    e.preventDefault();
     if (!newDevice.device_id) {
       alert("Device ID is required.");
       return;
@@ -205,6 +206,15 @@ const Dashboard = () => {
   return (
     <div style={{ padding: 20 }}>
       <h2>Medical Device Dashboard</h2>
+
+      {/* Add device button only for admin */}
+      { role === "admin" && (
+        <Button variant="contained" onClick={() => setOpen(true)} sx={{ mb: 2 }}>
+          Add Device
+        </Button>
+      )}
+
+      {/* Device List grid */}
       <div style={{ height: 500, width: "100%" }}>
         <DataGrid
           rows={devices.filter((d) => d.device_id)}
@@ -219,7 +229,7 @@ const Dashboard = () => {
       {/* Add Device Dialog */}
       <Dialog open={open} onClose={() => setOpen(false)}>
         <DialogTitle>Add Device</DialogTitle>
-        <Box onSubmit={handleAddDevice}>
+        <Box component="form" onSubmit={(e) => {e.preventDefault(); handleAddDevice();}} noValidate>
           <DialogContent>
             <TextField
               label="Device ID"
@@ -229,12 +239,14 @@ const Dashboard = () => {
               }
               fullWidth
               required
+              margin="dense"
             />
             <TextField
               label="Type"
               value={newDevice.type}
               onChange={(e) => setNewDevice({ ...newDevice, type: e.target.value })}
               fullWidth
+              margin="dense"
             />
             <TextField
               label="Facility"
@@ -243,6 +255,7 @@ const Dashboard = () => {
                 setNewDevice({ ...newDevice, facility: e.target.value })
               }
               fullWidth
+              margin="dense"
             />
             <TextField
               label="Battery"
@@ -252,12 +265,14 @@ const Dashboard = () => {
                 setNewDevice({ ...newDevice, battery: e.target.value })
               }
               fullWidth
+              margin="dense"
             />
             <TextField
               label="Status"
               value={newDevice.status}
               onChange={(e) => setNewDevice({ ...newDevice, status: e.target.value })}
               fullWidth
+              margin="dense"
             />
             <TextField
               label="AMC/CMC Status"
@@ -266,69 +281,77 @@ const Dashboard = () => {
                 setNewDevice({ ...newDevice, amcStatus: e.target.value })
               }
               fullWidth
+              margin="dense"
             />
           </DialogContent>
-        </Box>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleAddDevice} variant="contained">
-            Add
-          </Button>
+          <DialogActions>
+            <Button onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddDevice} variant="contained">
+              Add
+            </Button>
         </DialogActions>
+        </Box>
       </Dialog>
 
       {/* Edit Device Dialog */}
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
         <DialogTitle>Edit Device</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Type"
-            value={editingDevice.type}
-            onChange={(e) =>
-              setEditingDevice({ ...editingDevice, type: e.target.value })
-            }
-            fullWidth
-          />
-          <TextField
-            label="Facility"
-            value={editingDevice.facility}
-            onChange={(e) =>
-              setEditingDevice({ ...editingDevice, facility: e.target.value })
-            }
-            fullWidth
-          />
-          <TextField
-            label="Battery"
-            type="number"
-            value={editingDevice.battery}
-            onChange={(e) =>
-              setEditingDevice({ ...editingDevice, battery: e.target.value })
-            }
-            fullWidth
-          />
-          <TextField
-            label="Status"
-            value={editingDevice.status}
-            onChange={(e) =>
-              setEditingDevice({ ...editingDevice, status: e.target.value })
-            }
-            fullWidth
-          />
-          <TextField
-            label="AMC/CMC Status"
-            value={editingDevice.amcStatus}
-            onChange={(e) =>
-              setEditingDevice({ ...editingDevice, amcStatus: e.target.value })
-            }
-            fullWidth
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleUpdateDevice} variant="contained">
-            Save
-          </Button>
-        </DialogActions>
+        <Box component="form" onSubmit={(e) => { e.preventDefault(); handleUpdateDevice()}} noValidate>
+            <DialogContent>
+              <TextField
+                label="Type"
+                value={editingDevice.type}
+                onChange={(e) =>
+                  setEditingDevice({ ...editingDevice, type: e.target.value })
+                }
+                fullWidth
+                margin="dense"
+              />
+              <TextField
+                label="Facility"
+                value={editingDevice.facility}
+                onChange={(e) =>
+                  setEditingDevice({ ...editingDevice, facility: e.target.value })
+                }
+                fullWidth
+                margin="dense"
+              />
+              <TextField
+                label="Battery"
+                type="number"
+                value={editingDevice.battery}
+                onChange={(e) =>
+                  setEditingDevice({ ...editingDevice, battery: e.target.value })
+                }
+                fullWidth
+                margin="dense"
+              />
+              <TextField
+                label="Status"
+                value={editingDevice.status}
+                onChange={(e) =>
+                  setEditingDevice({ ...editingDevice, status: e.target.value })
+                }
+                fullWidth
+                margin="dense"
+              />
+              <TextField
+                label="AMC/CMC Status"
+                value={editingDevice.amcStatus}
+                onChange={(e) =>
+                  setEditingDevice({ ...editingDevice, amcStatus: e.target.value })
+                }
+                fullWidth
+                margin="dense"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+              <Button type="submit" onClick={handleUpdateDevice} variant="contained">
+                Save
+              </Button>
+            </DialogActions>
+        </Box>
       </Dialog>
     </div>
   );

@@ -191,9 +191,11 @@ const Dashboard = () => {
           Edit
         </Button>
         <Button
-          variant="outlined"
-          color="error"
+          variant="contained"
+          color="warning"
           size="small"
+          sx={{ ml: 1 }}
+
           onClick={() => handleDelete(params.row.device_id)}
         >
           Delete
@@ -286,7 +288,7 @@ const Dashboard = () => {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="contained" color="warning" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={handleAddDevice} variant="contained">
               Add
             </Button>
@@ -347,7 +349,7 @@ const Dashboard = () => {
               />
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+              <Button variant="contained" color="warning" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
               <Button type="submit" onClick={handleUpdateDevice} variant="contained">
                 Save
               </Button>
